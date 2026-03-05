@@ -1,0 +1,112 @@
+## Unreal Engine ##
+## Auto detect text files and perform LF normalization ##
+
+* text=auto
+
+# UE file types
+*.uasset filter=lfs diff=lfs merge=lfs -text
+*.umap filter=lfs diff=lfs merge=lfs -text
+*.udk filter=lfs diff=lfs merge=lfs -text
+*.upk filter=lfs diff=lfs merge=lfs -text
+
+--------------------------------------------------
+
+# 2D formats
+# Read more in: https://docs.unrealengine.com/4.26/en-US/RenderingAndGraphics/Textures/Importing/
+
+# Recommended use:
+*.tga filter=lfs diff=lfs merge=lfs -text
+*.png filter=lfs diff=lfs merge=lfs -text
+*.bmp filter=lfs diff=lfs merge=lfs -text
+
+# Can also be used:
+*.float filter=lfs diff=lfs merge=lfs -text
+*.jpeg filter=lfs diff=lfs merge=lfs -text
+*.jpg filter=lfs diff=lfs merge=lfs -text
+*.pcx filter=lfs diff=lfs merge=lfs -text
+*.psd filter=lfs diff=lfs merge=lfs -text
+*.xcf filter=lfs diff=lfs merge=lfs -text
+*.tif filter=lfs diff=lfs merge=lfs -text
+*.tiff filter=lfs diff=lfs merge=lfs -text
+
+# Other supported formats:
+*.hdr filter=lfs diff=lfs merge=lfs -text
+*.dds filter=lfs diff=lfs merge=lfs -text
+*.exr filter=lfs diff=lfs merge=lfs -text
+
+--------------------------------------------------
+
+# 3D formats
+
+# Always recommended to use:
+# The UE4 FBX import pipeline uses FBX 2018
+*.fbx filter=lfs diff=lfs merge=lfs -text
+
+# Can also be used:
+*.obj filter=lfs diff=lfs merge=lfs -text
+
+# Other supported formats:
+*.abc filter=lfs diff=lfs merge=lfs -text
+*.srt filter=lfs diff=lfs merge=lfs -text
+
+--------------------------------------------------
+
+# Audio formats
+# Read more in: https://docs.unrealengine.com/4.27/en-US/WorkingWithAudio/Overview/#:~:text=Unreal%20Engine%204%20(UE4)%20supports,16%2Dbit%20format%20PCM%20files.
+
+# Always recommended to use:
+*.wav filter=lfs diff=lfs merge=lfs -text
+
+# Can also be used:
+*.aiff filter=lfs diff=lfs merge=lfs -text
+*.ogg filter=lfs diff=lfs merge=lfs -text
+*.flac filter=lfs diff=lfs merge=lfs -text
+
+# Not recommended to use, but supported:
+*.mp3 filter=lfs diff=lfs merge=lfs -text
+*.wma filter=lfs diff=lfs merge=lfs -text
+*.ac3 filter=lfs diff=lfs merge=lfs -text
+*.amr filter=lfs diff=lfs merge=lfs -text
+*.aif filter=lfs diff=lfs merge=lfs -text
+*.au filter=lfs diff=lfs merge=lfs -text
+*.cdda filter=lfs diff=lfs merge=lfs -text
+*.caf filter=lfs diff=lfs merge=lfs -text
+*.bwf filter=lfs diff=lfs merge=lfs -text
+*.adts filter=lfs diff=lfs merge=lfs -text
+
+--------------------------------------------------
+
+# Video formats
+# Read more in: https://docs.unrealengine.com/5.0/en-US/media-framework-technical-reference-for-unreal-engine/
+
+# Always recommended to use, supports all platforms:
+# For the best compatibility and performance, it is recommended to use H.264 encoded MP4 (.mp4) container files.
+*.mp4 filter=lfs diff=lfs merge=lfs -text
+
+# Can also be used, only some platforms are supported:
+*.3g2 filter=lfs diff=lfs merge=lfs -text
+*.3gp filter=lfs diff=lfs merge=lfs -text
+*.3gp2 filter=lfs diff=lfs merge=lfs -text
+*.3gpp filter=lfs diff=lfs merge=lfs -text
+*.m4a filter=lfs diff=lfs merge=lfs -text
+*.m4v filter=lfs diff=lfs merge=lfs -text
+*.mov filter=lfs diff=lfs merge=lfs -text
+*.asf filter=lfs diff=lfs merge=lfs -text
+*.avi filter=lfs diff=lfs merge=lfs -text
+*.wmv filter=lfs diff=lfs merge=lfs -text
+
+--------------------------------------------------
+
+# Fonts
+# Read more in: https://docs.unrealengine.com/5.0/en-US/importing-fonts-in-unreal-engine/
+
+*.ttf filter=lfs diff=lfs merge=lfs -text
+*.otf filter=lfs diff=lfs merge=lfs -text
+
+--------------------------------------------------
+
+# Documents
+*.csv filter=lfs diff=lfs merge=lfs -text
+
+# This is optional, to store information you want to share in the repository as documentation about the project, remove it if you don't need it.
+*.pdf filter=lfs diff=lfs merge=lfs -text
