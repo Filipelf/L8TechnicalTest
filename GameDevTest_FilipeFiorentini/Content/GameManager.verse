@@ -11,9 +11,9 @@ TriggerSetup := class<concrete>:
 
     @editable ResourceCost : int = 0
 
-    @editable ObjectsToTrigger : creative_prop = creative_prop{}
+    @editable ActorToTrigger : creative_prop = creative_prop{}
 
-    @editable LocationToMoveObjects : vector3 = vector3{}
+    @editable LocationToMoveActor : vector3 = vector3{}
 
 GameManager := class(creative_device):
 
@@ -38,14 +38,6 @@ GameManager := class(creative_device):
     var GoldCount : int = 0
     var TotalGold : int = 0
 
-    #@editable var AddUITriggerDevice : trigger_device = trigger_device{}
-
-
-    #@editable var Trigger : trigger_device = trigger_device{}
-    #@editable var MoveObject : creative_prop = creative_prop{}
-    #@editable var DesiredLocation : vector3 = vector3{}
-
-    # Runs when the device is started in a running game
     OnBegin<override>()<suspends>:void=
         
         SpawnDevice.SpawnedEvent.Subscribe(OnPlayerSpawned)
@@ -55,8 +47,6 @@ GameManager := class(creative_device):
         WoodCollector_Manipulation.DamagedEvent.Subscribe(OnHarvestingProp)
 
         GoldCollector_Zone.AgentEntersEvent.Subscribe(OnAgentGoldCollectorZone)
-
-        #Trigger.TriggeredEvent.Subscribe(OnTriggeredTrigger)
 
         set ResourcesUI.WoodCount = InitializeUICount
         set ResourcesUI.GoldCount = InitializeUICount
@@ -89,10 +79,5 @@ GameManager := class(creative_device):
             set ResourcesUI.GoldCount = TextForUI("{TotalGold}")
             set GoldCount = 0
             GoldCount_DisplayText.SetText(TextForUI("{GoldCount}"))
-
-    <#OnTriggeredTrigger(MaybeAgent : ?agent):void=
-        Transform := MoveClaimZone.GetTransform()
-        if (WoodCount >= 3):
-            if (MoveObject.TeleportTo[DesiredLocation, Transform.Rotation]){}#>
 
         
