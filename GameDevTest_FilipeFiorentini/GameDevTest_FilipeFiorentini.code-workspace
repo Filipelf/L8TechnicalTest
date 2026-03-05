@@ -1,0 +1,58 @@
+{
+    "folders": [
+        {
+            "name": "/invaliddomain/GameDevTest_FilipeFiorentini",
+            "path": "C:/Users/User/Documents/GitHub/L8TechnicalTest/GameDevTest_FilipeFiorentini/Content"
+        },
+        {
+            "name": "/invaliddomain/GameDevTest_FilipeFiorentini (Assets)",
+            "path": "C:/Users/User/AppData/Local/UnrealEditorFortnite/Saved/VerseProject/GameDevTest_FilipeFiorentini/GameDevTest_FilipeFiorentini-Assets"
+        },
+        {
+            "name": "vproject - DO NOT MODIFY",
+            "path": "C:/Users/User/AppData/Local/UnrealEditorFortnite/Saved/VerseProject/GameDevTest_FilipeFiorentini/vproject"
+        },
+        {
+            "name": "/Verse.org",
+            "path": "C:/Users/User/AppData/Local/UnrealEditorFortnite/Saved/VerseProject/GameDevTest_FilipeFiorentini/Verse"
+        },
+        {
+            "name": "/UnrealEngine.com",
+            "path": "C:/Users/User/AppData/Local/UnrealEditorFortnite/Saved/VerseProject/GameDevTest_FilipeFiorentini/UnrealEngine"
+        },
+        {
+            "name": "/Fortnite.com",
+            "path": "C:/Users/User/AppData/Local/UnrealEditorFortnite/Saved/VerseProject/GameDevTest_FilipeFiorentini/Fortnite"
+        }
+    ],
+    "settings": {
+        "files.exclude": {
+            "**/*.uasset": true,
+            "**/*.umap": true,
+            "**/*.png": true,
+            "**/*.jpg": true,
+            "**/*.tga": true,
+            "_INT": true,
+            "**/*.vproject": true,
+            "__ExternalActors__": true,
+            "__ExternalObjects__": true,
+            "Collections": true,
+            "Developers": true
+        },
+        "files.autoSave": "onWindowChange",
+        "workbench.colorTheme": "Verse (Dark)",
+        "editor.bracketPairColorization.enabled": false,
+        "editor.acceptSuggestionOnEnter": "off"
+    },
+    "launch": {
+        "version": "0.2.0",
+        "configurations": [
+            {
+                "name": "Verse Debug",
+                "type": "verse",
+                "request": "attach",
+                "debugServer": 1961
+            }
+        ]
+    }
+}
