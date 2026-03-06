@@ -5,7 +5,7 @@ using { /UnrealEngine.com/Temporary/SpatialMath }
 using { /UnrealEngine.com/Temporary/Diagnostics }
 using { /Fortnite.com/Characters }
 
-# Resource type enum for choosing between Wood and Gold
+# Resource Setup
 ResourceType := enum { Wood, Gold }
 
 TriggerSetup := class<concrete>:
@@ -16,12 +16,11 @@ TriggerSetup := class<concrete>:
     @editable ActorToTrigger : creative_prop = creative_prop{}
     @editable TargetMarker : creative_prop = creative_prop{}
     
-    # Track if this trigger has been completed
     var Completed : logic = false
 
 GameManager := class(creative_device):
 
-    #Initialization:
+    # Initialization:
     @editable SpawnDevice : player_spawner_device = player_spawner_device{}
 
     @editable ClaimZone : mutator_zone_device = mutator_zone_device{}
@@ -49,7 +48,6 @@ GameManager := class(creative_device):
         WoodCollector_Manipulation.DamagedEvent.Subscribe(OnHarvestingProp)
         GoldCollector_Zone.AgentEntersEvent.Subscribe(OnAgentGoldCollectorZone)
         
-        # Subscribe each trigger to its own specific handler (8 triggers: 0-7)
         if (Triggers.Length > 0):
             if (Phase0 := Triggers[0]):
                 Phase0.Trigger.TriggeredEvent.Subscribe(HandleTrigger0)
@@ -85,7 +83,6 @@ GameManager := class(creative_device):
         set ResourcesUI.WoodCount = InitializeUICount
         set ResourcesUI.GoldCount = InitializeUICount
 
-        # Initialize triggers - hide all except the first one
         spawn { InitializeTriggers() }
 
         loop:
@@ -95,21 +92,16 @@ GameManager := class(creative_device):
 
     # Initialize triggers - show only the first one, hide others
     InitializeTriggers()<suspends> : void =
-        # First, hide all triggers
         for (Phase : Triggers):
             HideTrigger(Phase)
         
-        # Then show only the first trigger (index 0) if it exists
         if (Triggers.Length > 0):
             if (FirstPhase := Triggers[0]):
                 ShowTrigger(FirstPhase)
 
-    # Show a trigger (enable and bring it up)
     ShowTrigger(Phase : TriggerSetup) : void =
-        # Enable the trigger
         Phase.Trigger.Enable()
         
-        # Teleport it back to original position - FIXED: Create new location vector
         TriggerTransform := Phase.Trigger.GetTransform()
         OriginalLocation := vector3:
             X := TriggerTransform.Translation.X
@@ -118,12 +110,9 @@ GameManager := class(creative_device):
         if (Phase.Trigger.TeleportTo[OriginalLocation, TriggerTransform.Rotation]):
             void
 
-    # Hide a trigger (disable and move it down)
     HideTrigger(Phase : TriggerSetup) : void =
-        # Disable the trigger
         Phase.Trigger.Disable()
         
-        # Move it down to hide it - FIXED: Create new location vector
         TriggerTransform := Phase.Trigger.GetTransform()
         HiddenLocation := vector3:
             X := TriggerTransform.Translation.X
@@ -132,7 +121,6 @@ GameManager := class(creative_device):
         if (Phase.Trigger.TeleportTo[HiddenLocation, TriggerTransform.Rotation]):
             void
 
-    # Individual handlers for each trigger (8 triggers: 0-7)
     HandleTrigger0(MaybeAgent : ?agent) : void = spawn { ProcessBuilding(0) }
     HandleTrigger1(MaybeAgent : ?agent) : void = spawn { ProcessBuilding(1) }
     HandleTrigger2(MaybeAgent : ?agent) : void = spawn { ProcessBuilding(2) }
@@ -144,67 +132,48 @@ GameManager := class(creative_device):
 
     # Process the building for a specific Trigger Index
     ProcessBuilding(TriggerIndex : int)<suspends> : void =
-        # Safely access the array element
         if (Phase := Triggers[TriggerIndex]):
-            
-            # Check if this trigger is already completed
             if (Phase.Completed = true):
                 return
             
-            # Check the appropriate resource based on CostResourceType
             if (Phase.CostResourceType = ResourceType.Wood):
-                # Check if player has enough wood
                 if (WoodCount >= Phase.ResourceCost):
-                    # Deduct wood
                     set WoodCount -= Phase.ResourceCost
                     set ResourcesUI.WoodCount = TextForUI("{WoodCount}")
                     
-                    # Build the house part
                     BuildActor(Phase)
                     
-                    # Mark as completed
                     set Phase.Completed = true
                     
-                    # Disable and hide the current trigger
                     HideTrigger(Phase)
                     
-                    # Show the next trigger if it exists
                     NextIndex := TriggerIndex + 1
                     if (NextIndex < Triggers.Length):
                         if (NextPhase := Triggers[NextIndex]):
                             ShowTrigger(NextPhase)
             
             else if (Phase.CostResourceType = ResourceType.Gold):
-                # Check if player has enough gold
                 if (TotalGold >= Phase.ResourceCost):
-                    # Deduct gold
                     set TotalGold -= Phase.ResourceCost
                     set ResourcesUI.GoldCount = TextForUI("{TotalGold}")
                     
-                    # Build the house part
                     BuildActor(Phase)
                     
-                    # Mark as completed
                     set Phase.Completed = true
                     
-                    # Disable and hide the current trigger
                     HideTrigger(Phase)
                     
-                    # Show the next trigger if it exists
                     NextIndex := TriggerIndex + 1
                     if (NextIndex < Triggers.Length):
                         if (NextPhase := Triggers[NextIndex]):
                             ShowTrigger(NextPhase)
 
     BuildActor(Phase : TriggerSetup) : void =
-        # Get target location from marker
         TargetTransform := Phase.TargetMarker.GetTransform()
         TargetLoc := TargetTransform.Translation
         
-        # Get current transform
         CurrentTransform := Phase.ActorToTrigger.GetTransform()
         
-        # Teleport to target
         if (Phase.ActorToTrigger.TeleportTo[TargetLoc, CurrentTransform.Rotation]):
             void
 
@@ -217,16 +186,13 @@ GameManager := class(creative_device):
         if (Player := player[Agent]):
             Transform := MoveClaimZone.GetTransform()
             
-            # FIXED: Create new location vector
             CurrentLoc := Transform.Translation
             NewLocation := vector3:
                 X := CurrentLoc.X
                 Y := CurrentLoc.Y
                 Z := CurrentLoc.Z - 1500.0
             
-            # Teleport claim zone
             if (MoveClaimZone.TeleportTo[NewLocation, Transform.Rotation]):
-                # Enable wood harvesting
                 WoodCollector_Manipulation.Enable()
 
     OnHarvestingProp(Agent : agent) : void =
