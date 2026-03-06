@@ -5,7 +5,7 @@ using { /UnrealEngine.com/Temporary/SpatialMath }
 using { /UnrealEngine.com/Temporary/Diagnostics }
 using { /Fortnite.com/Characters }
 
-# Resource Setup
+# Resource type enum for choosing between Wood and Gold
 ResourceType := enum { Wood, Gold }
 
 TriggerSetup := class<concrete>:
@@ -20,7 +20,7 @@ TriggerSetup := class<concrete>:
 
 GameManager := class(creative_device):
 
-    # Initialization:
+    #Initialization:
     @editable SpawnDevice : player_spawner_device = player_spawner_device{}
 
     @editable ClaimZone : mutator_zone_device = mutator_zone_device{}
@@ -40,6 +40,8 @@ GameManager := class(creative_device):
     var WoodCount : int = 0
     var GoldCount : int = 0
     var TotalGold : int = 0
+    
+    var ClaimZoneActivated : logic = false
 
     OnBegin<override>()<suspends> : void =
         
@@ -83,18 +85,18 @@ GameManager := class(creative_device):
         set ResourcesUI.WoodCount = InitializeUICount
         set ResourcesUI.GoldCount = InitializeUICount
 
-        spawn { InitializeTriggers() }
+        spawn { HideAllTriggers() }
 
         loop:
             set GoldCount += 1
             GoldCount_DisplayText.SetText(TextForUI("{GoldCount}"))
             Sleep(1.0)
 
-    # Initialize triggers - show only the first one, hide others
-    InitializeTriggers()<suspends> : void =
+    HideAllTriggers()<suspends> : void =
         for (Phase : Triggers):
             HideTrigger(Phase)
-        
+
+    ShowFirstTrigger() : void =
         if (Triggers.Length > 0):
             if (FirstPhase := Triggers[0]):
                 ShowTrigger(FirstPhase)
@@ -133,6 +135,7 @@ GameManager := class(creative_device):
     # Process the building for a specific Trigger Index
     ProcessBuilding(TriggerIndex : int)<suspends> : void =
         if (Phase := Triggers[TriggerIndex]):
+            
             if (Phase.Completed = true):
                 return
             
@@ -184,16 +187,21 @@ GameManager := class(creative_device):
         
     OnAgentEntersClaimZone(Agent : agent) : void =
         if (Player := player[Agent]):
-            Transform := MoveClaimZone.GetTransform()
-            
-            CurrentLoc := Transform.Translation
-            NewLocation := vector3:
-                X := CurrentLoc.X
-                Y := CurrentLoc.Y
-                Z := CurrentLoc.Z - 1500.0
-            
-            if (MoveClaimZone.TeleportTo[NewLocation, Transform.Rotation]):
-                WoodCollector_Manipulation.Enable()
+            if (ClaimZoneActivated = false):
+                set ClaimZoneActivated = true
+                
+                Transform := MoveClaimZone.GetTransform()
+                
+                CurrentLoc := Transform.Translation
+                NewLocation := vector3:
+                    X := CurrentLoc.X
+                    Y := CurrentLoc.Y
+                    Z := CurrentLoc.Z - 1500.0
+                
+                if (MoveClaimZone.TeleportTo[NewLocation, Transform.Rotation]):
+                    WoodCollector_Manipulation.Enable()
+                    
+                    ShowFirstTrigger()
 
     OnHarvestingProp(Agent : agent) : void =
         if (Player := player[Agent]):
