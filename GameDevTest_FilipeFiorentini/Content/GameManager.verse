@@ -5,10 +5,14 @@ using { /UnrealEngine.com/Temporary/SpatialMath }
 using { /UnrealEngine.com/Temporary/Diagnostics }
 using { /Fortnite.com/Characters }
 
+# Resource type enum for choosing between Wood and Gold
+ResourceType := enum { Wood, Gold }
+
 TriggerSetup := class<concrete>:
     
     @editable Trigger : trigger_device = trigger_device{}
     @editable ResourceCost : int = 0
+    @editable CostResourceType : ResourceType = ResourceType.Wood  # Renamed to avoid conflict!
     @editable ActorToTrigger : creative_prop = creative_prop{}
     @editable TargetMarker : creative_prop = creative_prop{}
 
@@ -97,21 +101,41 @@ GameManager := class(creative_device):
     ProcessBuilding(TriggerIndex : int)<suspends> : void =
         # Safely access the array element
         if (Phase := Triggers[TriggerIndex]):
-            # Check if player has enough gold
-            if (TotalGold >= Phase.ResourceCost):
-                # Deduct gold
-                set TotalGold -= Phase.ResourceCost
-                set ResourcesUI.GoldCount = TextForUI("{TotalGold}")
-                
-                # Build the house part
-                BuildActor(Phase)
-                Print("Built phase {TriggerIndex} costing {Phase.ResourceCost} gold!")
-                
-                # Disable the trigger so it can't be used again
-                Phase.Trigger.Disable()
-                Print("Trigger {TriggerIndex} disabled")
-            else:
-                Print("Not enough gold! Need {Phase.ResourceCost}, have {TotalGold}")
+            
+            # Check the appropriate resource based on CostResourceType
+            if (Phase.CostResourceType = ResourceType.Wood):
+                # Check if player has enough wood
+                if (WoodCount >= Phase.ResourceCost):
+                    # Deduct wood
+                    set WoodCount -= Phase.ResourceCost
+                    set ResourcesUI.WoodCount = TextForUI("{WoodCount}")
+                    
+                    # Build the house part
+                    BuildActor(Phase)
+                    Print("Built phase {TriggerIndex} with {Phase.ResourceCost} wood!")
+                    
+                    # Disable the trigger so it can't be used again
+                    Phase.Trigger.Disable()
+                    Print("Trigger {TriggerIndex} disabled")
+                else:
+                    Print("Not enough wood! Need {Phase.ResourceCost}, have {WoodCount}")
+            
+            else if (Phase.CostResourceType = ResourceType.Gold):
+                # Check if player has enough gold
+                if (TotalGold >= Phase.ResourceCost):
+                    # Deduct gold
+                    set TotalGold -= Phase.ResourceCost
+                    set ResourcesUI.GoldCount = TextForUI("{TotalGold}")
+                    
+                    # Build the house part
+                    BuildActor(Phase)
+                    Print("Built phase {TriggerIndex} with {Phase.ResourceCost} gold!")
+                    
+                    # Disable the trigger so it can't be used again
+                    Phase.Trigger.Disable()
+                    Print("Trigger {TriggerIndex} disabled")
+                else:
+                    Print("Not enough gold! Need {Phase.ResourceCost}, have {TotalGold}")
 
     BuildActor(Phase : TriggerSetup) : void =
         # Get target location from marker
