@@ -12,9 +12,12 @@ TriggerSetup := class<concrete>:
     
     @editable Trigger : trigger_device = trigger_device{}
     @editable ResourceCost : int = 0
-    @editable CostResourceType : ResourceType = ResourceType.Wood  # Renamed to avoid conflict!
+    @editable CostResourceType : ResourceType = ResourceType.Wood
     @editable ActorToTrigger : creative_prop = creative_prop{}
     @editable TargetMarker : creative_prop = creative_prop{}
+    
+    # Track if this trigger has been completed
+    var Completed : logic = false
 
 GameManager := class(creative_device):
 
@@ -82,10 +85,52 @@ GameManager := class(creative_device):
         set ResourcesUI.WoodCount = InitializeUICount
         set ResourcesUI.GoldCount = InitializeUICount
 
+        # Initialize triggers - hide all except the first one
+        spawn { InitializeTriggers() }
+
         loop:
             set GoldCount += 1
             GoldCount_DisplayText.SetText(TextForUI("{GoldCount}"))
             Sleep(1.0)
+
+    # Initialize triggers - show only the first one, hide others
+    InitializeTriggers()<suspends> : void =
+        # First, hide all triggers
+        for (Phase : Triggers):
+            HideTrigger(Phase)
+        
+        # Then show only the first trigger (index 0) if it exists
+        if (Triggers.Length > 0):
+            if (FirstPhase := Triggers[0]):
+                ShowTrigger(FirstPhase)
+
+    # Show a trigger (enable and bring it up)
+    ShowTrigger(Phase : TriggerSetup) : void =
+        # Enable the trigger
+        Phase.Trigger.Enable()
+        
+        # Teleport it back to original position - FIXED: Create new location vector
+        TriggerTransform := Phase.Trigger.GetTransform()
+        OriginalLocation := vector3:
+            X := TriggerTransform.Translation.X
+            Y := TriggerTransform.Translation.Y
+            Z := TriggerTransform.Translation.Z + 1500.0
+        if (Phase.Trigger.TeleportTo[OriginalLocation, TriggerTransform.Rotation]):
+            void
+
+    # Hide a trigger (disable and move it down)
+    HideTrigger(Phase : TriggerSetup) : void =
+        # Disable the trigger
+        Phase.Trigger.Disable()
+        
+        # Move it down to hide it - FIXED: Create new location vector
+        TriggerTransform := Phase.Trigger.GetTransform()
+        HiddenLocation := vector3:
+            X := TriggerTransform.Translation.X
+            Y := TriggerTransform.Translation.Y
+            Z := TriggerTransform.Translation.Z - 1500.0
+        if (Phase.Trigger.TeleportTo[HiddenLocation, TriggerTransform.Rotation]):
+            void
 
     # Individual handlers for each trigger (8 triggers: 0-7)
     HandleTrigger0(MaybeAgent : ?agent) : void = spawn { ProcessBuilding(0) }
@@ -102,6 +147,10 @@ GameManager := class(creative_device):
         # Safely access the array element
         if (Phase := Triggers[TriggerIndex]):
             
+            # Check if this trigger is already completed
+            if (Phase.Completed = true):
+                return
+            
             # Check the appropriate resource based on CostResourceType
             if (Phase.CostResourceType = ResourceType.Wood):
                 # Check if player has enough wood
@@ -112,13 +161,18 @@ GameManager := class(creative_device):
                     
                     # Build the house part
                     BuildActor(Phase)
-                    Print("Built phase {TriggerIndex} with {Phase.ResourceCost} wood!")
                     
-                    # Disable the trigger so it can't be used again
-                    Phase.Trigger.Disable()
-                    Print("Trigger {TriggerIndex} disabled")
-                else:
-                    Print("Not enough wood! Need {Phase.ResourceCost}, have {WoodCount}")
+                    # Mark as completed
+                    set Phase.Completed = true
+                    
+                    # Disable and hide the current trigger
+                    HideTrigger(Phase)
+                    
+                    # Show the next trigger if it exists
+                    NextIndex := TriggerIndex + 1
+                    if (NextIndex < Triggers.Length):
+                        if (NextPhase := Triggers[NextIndex]):
+                            ShowTrigger(NextPhase)
             
             else if (Phase.CostResourceType = ResourceType.Gold):
                 # Check if player has enough gold
@@ -129,13 +183,18 @@ GameManager := class(creative_device):
                     
                     # Build the house part
                     BuildActor(Phase)
-                    Print("Built phase {TriggerIndex} with {Phase.ResourceCost} gold!")
                     
-                    # Disable the trigger so it can't be used again
-                    Phase.Trigger.Disable()
-                    Print("Trigger {TriggerIndex} disabled")
-                else:
-                    Print("Not enough gold! Need {Phase.ResourceCost}, have {TotalGold}")
+                    # Mark as completed
+                    set Phase.Completed = true
+                    
+                    # Disable and hide the current trigger
+                    HideTrigger(Phase)
+                    
+                    # Show the next trigger if it exists
+                    NextIndex := TriggerIndex + 1
+                    if (NextIndex < Triggers.Length):
+                        if (NextPhase := Triggers[NextIndex]):
+                            ShowTrigger(NextPhase)
 
     BuildActor(Phase : TriggerSetup) : void =
         # Get target location from marker
@@ -147,9 +206,7 @@ GameManager := class(creative_device):
         
         # Teleport to target
         if (Phase.ActorToTrigger.TeleportTo[TargetLoc, CurrentTransform.Rotation]):
-            Print("Actor moved to: {TargetLoc}")
-        else:
-            Print("Teleport failed!")
+            void
 
     OnPlayerSpawned(SpawnedAgent : agent) : void =
         if (Player := player[SpawnedAgent]):
@@ -159,12 +216,18 @@ GameManager := class(creative_device):
     OnAgentEntersClaimZone(Agent : agent) : void =
         if (Player := player[Agent]):
             Transform := MoveClaimZone.GetTransform()
-            var Location : vector3 = Transform.Translation
-            set Location.Z -= 1500.0
-            if (MoveClaimZone.TeleportTo[Location, Transform.Rotation]):
+            
+            # FIXED: Create new location vector
+            CurrentLoc := Transform.Translation
+            NewLocation := vector3:
+                X := CurrentLoc.X
+                Y := CurrentLoc.Y
+                Z := CurrentLoc.Z - 1500.0
+            
+            # Teleport claim zone
+            if (MoveClaimZone.TeleportTo[NewLocation, Transform.Rotation]):
                 # Enable wood harvesting
                 WoodCollector_Manipulation.Enable()
-                Print("Wood harvesting enabled!")
 
     OnHarvestingProp(Agent : agent) : void =
         if (Player := player[Agent]):
