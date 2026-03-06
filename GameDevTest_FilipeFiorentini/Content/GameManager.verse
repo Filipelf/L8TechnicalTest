@@ -1,19 +1,16 @@
-
 using { /Fortnite.com/Devices }
 using { /Verse.org/Simulation }
-using {/UnrealEngine.com/Temporary/UI}
-using {/UnrealEngine.com/Temporary/SpatialMath}
+using { /UnrealEngine.com/Temporary/UI }
+using { /UnrealEngine.com/Temporary/SpatialMath }
 using { /UnrealEngine.com/Temporary/Diagnostics }
+using { /Fortnite.com/Characters }
 
 TriggerSetup := class<concrete>:
     
     @editable Trigger : trigger_device = trigger_device{}
-
     @editable ResourceCost : int = 0
-
     @editable ActorToTrigger : creative_prop = creative_prop{}
-
-    @editable LocationToMoveActor : vector3 = vector3{}
+    @editable TargetMarker : creative_prop = creative_prop{}
 
 GameManager := class(creative_device):
 
@@ -38,15 +35,45 @@ GameManager := class(creative_device):
     var GoldCount : int = 0
     var TotalGold : int = 0
 
-    OnBegin<override>()<suspends>:void=
+    OnBegin<override>()<suspends> : void =
         
         SpawnDevice.SpawnedEvent.Subscribe(OnPlayerSpawned)
-
         ClaimZone.AgentEntersEvent.Subscribe(OnAgentEntersClaimZone)
-
         WoodCollector_Manipulation.DamagedEvent.Subscribe(OnHarvestingProp)
-
         GoldCollector_Zone.AgentEntersEvent.Subscribe(OnAgentGoldCollectorZone)
+        
+        # Subscribe each trigger to its own specific handler (8 triggers: 0-7)
+        if (Triggers.Length > 0):
+            if (Phase0 := Triggers[0]):
+                Phase0.Trigger.TriggeredEvent.Subscribe(HandleTrigger0)
+        
+        if (Triggers.Length > 1):
+            if (Phase1 := Triggers[1]):
+                Phase1.Trigger.TriggeredEvent.Subscribe(HandleTrigger1)
+        
+        if (Triggers.Length > 2):
+            if (Phase2 := Triggers[2]):
+                Phase2.Trigger.TriggeredEvent.Subscribe(HandleTrigger2)
+        
+        if (Triggers.Length > 3):
+            if (Phase3 := Triggers[3]):
+                Phase3.Trigger.TriggeredEvent.Subscribe(HandleTrigger3)
+        
+        if (Triggers.Length > 4):
+            if (Phase4 := Triggers[4]):
+                Phase4.Trigger.TriggeredEvent.Subscribe(HandleTrigger4)
+        
+        if (Triggers.Length > 5):
+            if (Phase5 := Triggers[5]):
+                Phase5.Trigger.TriggeredEvent.Subscribe(HandleTrigger5)
+        
+        if (Triggers.Length > 6):
+            if (Phase6 := Triggers[6]):
+                Phase6.Trigger.TriggeredEvent.Subscribe(HandleTrigger6)
+        
+        if (Triggers.Length > 7):
+            if (Phase7 := Triggers[7]):
+                Phase7.Trigger.TriggeredEvent.Subscribe(HandleTrigger7)
 
         set ResourcesUI.WoodCount = InitializeUICount
         set ResourcesUI.GoldCount = InitializeUICount
@@ -56,28 +83,73 @@ GameManager := class(creative_device):
             GoldCount_DisplayText.SetText(TextForUI("{GoldCount}"))
             Sleep(1.0)
 
-    OnPlayerSpawned(SpawnedAgent : agent) :void=
+    # Individual handlers for each trigger (8 triggers: 0-7)
+    HandleTrigger0(MaybeAgent : ?agent) : void = spawn { ProcessBuilding(0) }
+    HandleTrigger1(MaybeAgent : ?agent) : void = spawn { ProcessBuilding(1) }
+    HandleTrigger2(MaybeAgent : ?agent) : void = spawn { ProcessBuilding(2) }
+    HandleTrigger3(MaybeAgent : ?agent) : void = spawn { ProcessBuilding(3) }
+    HandleTrigger4(MaybeAgent : ?agent) : void = spawn { ProcessBuilding(4) }
+    HandleTrigger5(MaybeAgent : ?agent) : void = spawn { ProcessBuilding(5) }
+    HandleTrigger6(MaybeAgent : ?agent) : void = spawn { ProcessBuilding(6) }
+    HandleTrigger7(MaybeAgent : ?agent) : void = spawn { ProcessBuilding(7) }
+
+    # Process the building for a specific Trigger Index
+    ProcessBuilding(TriggerIndex : int)<suspends> : void =
+        # Safely access the array element
+        if (Phase := Triggers[TriggerIndex]):
+            # Check if player has enough gold
+            if (TotalGold >= Phase.ResourceCost):
+                # Deduct gold
+                set TotalGold -= Phase.ResourceCost
+                set ResourcesUI.GoldCount = TextForUI("{TotalGold}")
+                
+                # Build the house part
+                BuildActor(Phase)
+                Print("Built phase {TriggerIndex} costing {Phase.ResourceCost} gold!")
+                
+                # Disable the trigger so it can't be used again
+                Phase.Trigger.Disable()
+                Print("Trigger {TriggerIndex} disabled")
+            else:
+                Print("Not enough gold! Need {Phase.ResourceCost}, have {TotalGold}")
+
+    BuildActor(Phase : TriggerSetup) : void =
+        # Get target location from marker
+        TargetTransform := Phase.TargetMarker.GetTransform()
+        TargetLoc := TargetTransform.Translation
+        
+        # Get current transform
+        CurrentTransform := Phase.ActorToTrigger.GetTransform()
+        
+        # Teleport to target
+        if (Phase.ActorToTrigger.TeleportTo[TargetLoc, CurrentTransform.Rotation]):
+            Print("Actor moved to: {TargetLoc}")
+        else:
+            Print("Teleport failed!")
+
+    OnPlayerSpawned(SpawnedAgent : agent) : void =
         if (Player := player[SpawnedAgent]):
             if (PlayerUI := GetPlayerUI[Player]):
                 PlayerUI.AddWidget(ResourcesUI)
         
-    OnAgentEntersClaimZone(Agent : agent):void=
+    OnAgentEntersClaimZone(Agent : agent) : void =
         if (Player := player[Agent]):
             Transform := MoveClaimZone.GetTransform()
             var Location : vector3 = Transform.Translation
             set Location.Z -= 1500.0
-                if (MoveClaimZone.TeleportTo[Location, Transform.Rotation]){}
+            if (MoveClaimZone.TeleportTo[Location, Transform.Rotation]):
+                # Enable wood harvesting
+                WoodCollector_Manipulation.Enable()
+                Print("Wood harvesting enabled!")
 
-    OnHarvestingProp(Agent : agent):void=
+    OnHarvestingProp(Agent : agent) : void =
         if (Player := player[Agent]):
             set WoodCount += 1
             set ResourcesUI.WoodCount = TextForUI("{WoodCount}")
 
-    OnAgentGoldCollectorZone(Agent : agent):void=
+    OnAgentGoldCollectorZone(Agent : agent) : void =
         if (Player := player[Agent]):
             set TotalGold += GoldCount
             set ResourcesUI.GoldCount = TextForUI("{TotalGold}")
             set GoldCount = 0
             GoldCount_DisplayText.SetText(TextForUI("{GoldCount}"))
-
-        
