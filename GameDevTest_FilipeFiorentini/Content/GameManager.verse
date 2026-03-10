@@ -85,6 +85,10 @@ GameManager := class(creative_device):
         set ResourcesUI.WoodCount = InitializeUICount
         set ResourcesUI.GoldCount = InitializeUICount
 
+        CurrentPlayers := GetPlayspace().GetPlayers()
+        for (PlayerAgent : CurrentPlayers):
+            spawn { DelayedAddWidget(PlayerAgent) }
+
         spawn { HideAllTriggers() }
 
         loop:
@@ -181,10 +185,15 @@ GameManager := class(creative_device):
             void
 
     OnPlayerSpawned(SpawnedAgent : agent) : void =
-        if (Player := player[SpawnedAgent]):
+        spawn { DelayedAddWidget(SpawnedAgent) }
+
+    DelayedAddWidget(PlayerAgent : agent)<suspends> : void =
+        Sleep(1.0)
+        
+        if (Player := player[PlayerAgent]):
             if (PlayerUI := GetPlayerUI[Player]):
                 PlayerUI.AddWidget(ResourcesUI)
-        
+
     OnAgentEntersClaimZone(Agent : agent) : void =
         if (Player := player[Agent]):
             if (ClaimZoneActivated = false):
